@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <arpa/inet.h>
+#include <sys/time.h>
 #include <openssl/sha.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
@@ -11,14 +12,8 @@
 
 #define PORT 8331
 #define BUF_SIZE 2048
+#define MAX_RECV_BUF 65536
 
-/*****************************************************************************
-* Function   : base64_encode
-* Description: SHA1 °á°ú¸¦ Base64 ÀÎÄÚµù
-* Parameters : - const unsigned char *input : ÀÔ·Â µ¥ÀÌÅÍ
-*             - int length : ±æÀÌ
-* Returns    : Base64 ¹®ÀÚ¿­ (free ÇÊ¿ä)
-******************************************************************************/
 char* base64_encode(const unsigned char *input, int length)
 {
     BIO *bmem, *b64;
@@ -42,12 +37,6 @@ char* base64_encode(const unsigned char *input, int length)
     return buff;
 }
 
-/*****************************************************************************
-* Function   : compute_accept_key
-* Description: Å¬¶óÀÌ¾ğÆ® WebSocket Key·Î Accept Key »ı¼º
-* Parameters : - const char *client_key : Å¬¶óÀÌ¾ğÆ® Key
-* Returns    : Accept Key ¹®ÀÚ¿­ (free ÇÊ¿ä)
-******************************************************************************/
 char* compute_accept_key(const char *client_key)
 {
     const char *GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
@@ -60,12 +49,6 @@ char* compute_accept_key(const char *client_key)
     return base64_encode(hash, SHA_DIGEST_LENGTH);
 }
 
-/*****************************************************************************
-* Function   : extract_websocket_key
-* Description: HTTP Çì´õ¿¡¼­ Sec-WebSocket-Key ÃßÃâ
-* Parameters : - const char *request : ÀüÃ¼ ¿äÃ» ¹®ÀÚ¿­
-* Returns    : Key ¹®ÀÚ¿­ Æ÷ÀÎÅÍ (free ÇÊ¿ä)
-******************************************************************************/
 char* extract_websocket_key(const char *request)
 {
     const char *key_header = "Sec-WebSocket-Key: ";
@@ -88,45 +71,25 @@ char* extract_websocket_key(const char *request)
     return key;
 }
 
-/*****************************************************************************
-* Function   : decode_ws_frame
-* Description: WebSocket ÇÁ·¹ÀÓÀ» ÇØ¼®ÇÏ°í ¸¶½ºÅ· ÇØÁ¦µÈ µ¥ÀÌÅÍ ÃßÃâ
-* Parameters : - const unsigned char *frame : ¼ö½Å ÇÁ·¹ÀÓ
-*             - size_t length : ÇÁ·¹ÀÓ ÀüÃ¼ ±æÀÌ
-*             - unsigned char *output : °á°ú ¹öÆÛ
-* Returns    : payload ±æÀÌ (½ÇÆĞ ½Ã -1)
-******************************************************************************/
-int decode_ws_frame(const unsigned char *frame, size_t length, unsigned char *output)
+int decode_ws_frame(const unsigned char *frame, size_t length, unsigned char *output, size_t *frame_len_out)
 {
-    size_t payload_len;
-    size_t offset;
-    const unsigned char *mask_key;
-    const unsigned char *payload;
-    size_t i;
+    size_t payload_len, offset, i;
+    const unsigned char *mask_key, *payload;
 
-    if (length < 6)
-    {
-        return -1;
-    }
+    if (length < 6) return -1;
 
     payload_len = frame[1] & 0x7F;
     offset = 2;
 
     if (payload_len == 126)
     {
-        if (length < 8)
-        {
-            return -1;
-        }
+        if (length < 8) return -1;
         payload_len = (frame[2] << 8) | frame[3];
         offset += 2;
     }
     else if (payload_len == 127)
     {
-        if (length < 14)
-        {
-            return -1;
-        }
+        if (length < 14) return -1;
         payload_len = 0;
         for (i = 0; i < 8; i++)
         {
@@ -135,10 +98,7 @@ int decode_ws_frame(const unsigned char *frame, size_t length, unsigned char *ou
         offset += 8;
     }
 
-    if (length < offset + 4 + payload_len)
-    {
-        return -1;
-    }
+    if (length < offset + 4 + payload_len) return -1;
 
     mask_key = frame + offset;
     payload = frame + offset + 4;
@@ -148,34 +108,25 @@ int decode_ws_frame(const unsigned char *frame, size_t length, unsigned char *ou
         output[i] = payload[i] ^ mask_key[i % 4];
     }
 
+    if (frame_len_out)
+    {
+        *frame_len_out = offset + 4 + payload_len;
+    }
+
     return (int)payload_len;
 }
 
-
-/*****************************************************************************
-* Function   : main
-* Description: WebSocket ¼­¹ö ±¸Çö
-* Parameters :
-* Returns    : 0
-******************************************************************************/
 int main()
 {
     int server_fd, client_fd;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_len;
     char buffer[BUF_SIZE];
-    char data[BUF_SIZE];
-    ssize_t recv_len;
-    char *client_key;
-    char *accept_key;
-    char response[512];
-    int data_len;
-    int i;
 
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0)
     {
-        perror("¼ÒÄÏ »ı¼º ½ÇÆĞ");
+        perror("ì†Œì¼“ ìƒì„± ì‹¤íŒ¨");
         return -1;
     }
 
@@ -186,69 +137,160 @@ int main()
 
     if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0)
     {
-        perror("bind ½ÇÆĞ");
+        perror("bind ì‹¤íŒ¨");
         close(server_fd);
         return -1;
     }
 
-    if (listen(server_fd, 1) < 0)
+    if (listen(server_fd, 10) < 0)
     {
-        perror("listen ½ÇÆĞ");
+        perror("listen ì‹¤íŒ¨");
         close(server_fd);
         return -1;
     }
 
-    printf("WebSocket ¼­¹ö ½ÇÇà Áß (Æ÷Æ® %d)...\n", PORT);
+    printf("ì„œë²„ ì‹¤í–‰ ì¤‘ (í¬íŠ¸ %d)...\n", PORT);
 
-    client_len = sizeof(client_addr);
-    client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
-    if (client_fd < 0)
+    while (1)
     {
-        perror("accept ½ÇÆĞ");
-        close(server_fd);
-        return -1;
-    }
-
-    recv_len = recv(client_fd, buffer, BUF_SIZE - 1, 0);
-    buffer[recv_len] = '\0';
-    printf("HTTP ¿äÃ»:\n%s\n", buffer);
-
-    client_key = extract_websocket_key(buffer);
-    if (!client_key)
-    {
-        fprintf(stderr, "WebSocket Å° ÃßÃâ ½ÇÆĞ\n");
-        close(client_fd);
-        close(server_fd);
-        return -1;
-    }
-
-    accept_key = compute_accept_key(client_key);
-    snprintf(response, sizeof(response),
-             "HTTP/1.1 101 Switching Protocols\r\n"
-             "Upgrade: websocket\r\n"
-             "Connection: Upgrade\r\n"
-             "Sec-WebSocket-Accept: %s\r\n\r\n",
-             accept_key);
-
-    send(client_fd, response, strlen(response), 0);
-    free(client_key);
-    free(accept_key);
-
-    printf("WebSocket ÇÚµå¼ÎÀÌÅ© ¿Ï·á. µ¥ÀÌÅÍ ¼ö½Å ´ë±â Áß...\n");
-
-    while ((recv_len = recv(client_fd, buffer, BUF_SIZE, 0)) > 0)
-    {
-        data_len = decode_ws_frame((unsigned char*)buffer, recv_len, (unsigned char*)data);
-        if (data_len > 0)
+        client_len = sizeof(client_addr);
+        client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
+        if (client_fd < 0)
         {
-            printf("¼ö½ÅµÈ µ¥ÀÌÅÍ (%d ¹ÙÀÌÆ®): ", data_len);
-            for (i = 0; i < data_len; i++)
-                printf("%c", data[i]);
-            printf("\n");
+            perror("accept ì‹¤íŒ¨");
+            continue;
         }
+
+        printf("í´ë¼ì´ì–¸íŠ¸ ì—°ê²°ë¨\n");
+
+        ssize_t recv_len;
+        recv_len = recv(client_fd, buffer, BUF_SIZE - 1, 0);
+        if (recv_len <= 0)
+        {
+            perror("ì´ˆê¸° ìˆ˜ì‹  ì‹¤íŒ¨");
+            close(client_fd);
+            continue;
+        }
+
+        buffer[recv_len] = '\0';
+
+        unsigned char *all_data = NULL;
+        size_t total_len = 0;
+        size_t capacity = 102400;
+        all_data = malloc(capacity);
+        if (!all_data)
+        {
+            perror("ë©”ëª¨ë¦¬ í• ë‹¹ ì‹¤íŒ¨");
+            close(client_fd);
+            continue;
+        }
+
+        struct timeval start, end;
+        double elapsed;
+
+        if (strncmp(buffer, "GET", 3) == 0)
+        {
+            char *client_key = extract_websocket_key(buffer);
+            char *accept_key = compute_accept_key(client_key);
+            char response[512];
+
+            snprintf(response, sizeof(response), "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: %s\r\n\r\n", accept_key);
+            send(client_fd, response, strlen(response), 0);
+            free(client_key);
+            free(accept_key);
+
+            printf("[WS] handshake ì™„ë£Œ. ìˆ˜ì‹  ì‹œì‘\n");
+            gettimeofday(&start, NULL);
+
+            unsigned char recv_buf[MAX_RECV_BUF];
+            size_t recv_buf_len = 0;
+            char data[BUF_SIZE];
+
+            while ((recv_len = recv(client_fd, buffer, BUF_SIZE, 0)) > 0)
+            {
+                if (recv_buf_len + recv_len > MAX_RECV_BUF)
+                {
+                    fprintf(stderr, "[WS] ëˆ„ì  ë²„í¼ ì´ˆê³¼\n");
+                    break;
+                }
+                memcpy(recv_buf + recv_buf_len, buffer, recv_len);
+                recv_buf_len += recv_len;
+
+                size_t offset = 0;
+                while (offset < recv_buf_len)
+                {
+                    size_t frame_len = 0;
+                    int data_len = decode_ws_frame(recv_buf + offset, recv_buf_len - offset, (unsigned char*)data, &frame_len);
+
+                    if (data_len > 0 && frame_len > 0)
+                    {
+                        if (total_len + data_len > capacity)
+                        {
+                            capacity *= 2;
+                            all_data = realloc(all_data, capacity);
+                            if (!all_data)
+                            {
+                                perror("ë©”ëª¨ë¦¬ ì¬í• ë‹¹ ì‹¤íŒ¨");
+                                break;
+                            }
+                        }
+                        memcpy(all_data + total_len, data, data_len);
+                        total_len += data_len;
+                        offset += frame_len;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                if (offset > 0 && offset < recv_buf_len)
+                {
+                    memmove(recv_buf, recv_buf + offset, recv_buf_len - offset);
+                    recv_buf_len -= offset;
+                }
+                else if (offset == recv_buf_len)
+                {
+                    recv_buf_len = 0;
+                }
+            }
+
+            gettimeofday(&end, NULL);
+            elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
+            printf("[WS] ì´ ìˆ˜ì‹  ë°”ì´íŠ¸: %zu / ì†Œìš” ì‹œê°„: %.6f ì´ˆ\n", total_len, elapsed);
+        }
+        else
+        {
+            gettimeofday(&start, NULL);
+            memcpy(all_data, buffer, recv_len);
+            total_len = recv_len;
+
+            while ((recv_len = recv(client_fd, buffer, BUF_SIZE, 0)) > 0)
+            {
+                if (total_len + recv_len > capacity)
+                {
+                    capacity *= 2;
+                    all_data = realloc(all_data, capacity);
+                    if (!all_data)
+                    {
+                        perror("ë©”ëª¨ë¦¬ ì¬í• ë‹¹ ì‹¤íŒ¨");
+                        break;
+                    }
+                }
+                memcpy(all_data + total_len, buffer, recv_len);
+                total_len += recv_len;
+            }
+
+            gettimeofday(&end, NULL);
+            elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
+            printf("[TCP] ì´ ìˆ˜ì‹  ë°”ì´íŠ¸: %zu / ì†Œìš” ì‹œê°„: %.6f ì´ˆ\n", total_len, elapsed);
+        }
+
+        free(all_data);
+        close(client_fd);
+        printf("í´ë¼ì´ì–¸íŠ¸ ì—°ê²° ì¢…ë£Œ\n\n");
     }
 
-    close(client_fd);
     close(server_fd);
     return 0;
 }

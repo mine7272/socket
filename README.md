@@ -53,10 +53,10 @@ make
 ./server_tcpws
 ./server_ws
 
-./client_rawtcp A301S
-./client_tcp2ws A301S
-./client_ws2tcp A301S
-./client_ws A301S
+./client_rawtcp [파일이름]
+./client_tcp2ws [파일이름]
+./client_ws2tcp [파일이름]
+./client_ws [파일이름]
 ```
 
 ---

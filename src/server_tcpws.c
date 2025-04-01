@@ -1,3 +1,8 @@
+/*****************************************************************************
+* File       : server_tcpws.c
+* Description: TCP 및 WebSocket 프로토콜을 처리하는 서버 프로그램
+*****************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +19,13 @@
 #define BUF_SIZE 2048
 #define MAX_RECV_BUF 65536
 
+/*****************************************************************************
+* Function   : base64_encode
+* Description: 바이너리 데이터를 base64로 인코딩
+* Parameters : - const unsigned char *input : 입력 데이터
+*              - int length                : 입력 길이
+* Returns    : 인코딩된 문자열 포인터 (heap 메모리)
+*****************************************************************************/
 char* base64_encode(const unsigned char *input, int length)
 {
     BIO *bmem, *b64;
@@ -37,6 +49,12 @@ char* base64_encode(const unsigned char *input, int length)
     return buff;
 }
 
+/*****************************************************************************
+* Function   : compute_accept_key
+* Description: WebSocket 핸드셰이크용 Accept 키 생성
+* Parameters : - const char *client_key : 클라이언트 제공 키
+* Returns    : 생성된 Accept 키 (heap 메모리)
+*****************************************************************************/
 char* compute_accept_key(const char *client_key)
 {
     const char *GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
@@ -49,6 +67,12 @@ char* compute_accept_key(const char *client_key)
     return base64_encode(hash, SHA_DIGEST_LENGTH);
 }
 
+/*****************************************************************************
+* Function   : extract_websocket_key
+* Description: 요청 헤더에서 Sec-WebSocket-Key 추출
+* Parameters : - const char *request : 요청 문자열
+* Returns    : 추출된 키 (heap 메모리)
+*****************************************************************************/
 char* extract_websocket_key(const char *request)
 {
     const char *key_header = "Sec-WebSocket-Key: ";
@@ -71,6 +95,15 @@ char* extract_websocket_key(const char *request)
     return key;
 }
 
+/*****************************************************************************
+* Function   : decode_ws_frame
+* Description: WebSocket 프레임을 디코드하고 마스킹 제거
+* Parameters : - const unsigned char *frame : 수신 프레임
+*              - size_t length              : 프레임 길이
+*              - unsigned char *output      : 출력 버퍼
+*              - size_t *frame_len_out      : 전체 프레임 길이 반환 포인터
+* Returns    : 유효 페이로드 길이
+*****************************************************************************/
 int decode_ws_frame(const unsigned char *frame, size_t length, unsigned char *output, size_t *frame_len_out)
 {
     size_t payload_len, offset, i;
@@ -116,12 +149,36 @@ int decode_ws_frame(const unsigned char *frame, size_t length, unsigned char *ou
     return (int)payload_len;
 }
 
+/*****************************************************************************
+* Function   : main
+* Description: TCP 및 WebSocket 서버 실행 루틴
+* Returns    : 0 (정상 종료), -1 (오류 발생 시)
+*****************************************************************************/
 int main()
 {
+    // 소켓 관련
     int server_fd, client_fd;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_len;
-    char buffer[BUF_SIZE];
+
+    // 수신 및 버퍼
+    char buffer[BUF_SIZE], data[BUF_SIZE];
+    ssize_t recv_len;
+    unsigned char recv_buf[MAX_RECV_BUF];
+    size_t recv_buf_len = 0, offset = 0, frame_len = 0;
+    int data_len = 0;
+
+    // 전체 수신 데이터 저장
+    unsigned char *all_data = NULL;
+    size_t total_len = 0, capacity = 102400;
+
+    // 시간 측정
+    struct timeval start, end;
+    double elapsed;
+
+    // WebSocket 핸드셰이크
+    char *client_key = NULL, *accept_key = NULL;
+    char response[512];
 
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0)
@@ -163,7 +220,6 @@ int main()
 
         printf("클라이언트 연결됨\n");
 
-        ssize_t recv_len;
         recv_len = recv(client_fd, buffer, BUF_SIZE - 1, 0);
         if (recv_len <= 0)
         {
@@ -173,10 +229,6 @@ int main()
         }
 
         buffer[recv_len] = '\0';
-
-        unsigned char *all_data = NULL;
-        size_t total_len = 0;
-        size_t capacity = 102400;
         all_data = malloc(capacity);
         if (!all_data)
         {
@@ -185,26 +237,22 @@ int main()
             continue;
         }
 
-        struct timeval start, end;
-        double elapsed;
-
         if (strncmp(buffer, "GET", 3) == 0)
         {
-            char *client_key = extract_websocket_key(buffer);
-            char *accept_key = compute_accept_key(client_key);
-            char response[512];
+            client_key = extract_websocket_key(buffer);
+            accept_key = compute_accept_key(client_key);
 
-            snprintf(response, sizeof(response), "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: %s\r\n\r\n", accept_key);
+            snprintf(response, sizeof(response),
+                     "HTTP/1.1 101 Switching Protocols\r\n"
+                     "Upgrade: websocket\r\n"
+                     "Connection: Upgrade\r\n"
+                     "Sec-WebSocket-Accept: %s\r\n\r\n", accept_key);
             send(client_fd, response, strlen(response), 0);
             free(client_key);
             free(accept_key);
 
             printf("[WS] handshake 완료. 수신 시작\n");
             gettimeofday(&start, NULL);
-
-            unsigned char recv_buf[MAX_RECV_BUF];
-            size_t recv_buf_len = 0;
-            char data[BUF_SIZE];
 
             while ((recv_len = recv(client_fd, buffer, BUF_SIZE, 0)) > 0)
             {
@@ -216,11 +264,11 @@ int main()
                 memcpy(recv_buf + recv_buf_len, buffer, recv_len);
                 recv_buf_len += recv_len;
 
-                size_t offset = 0;
+                offset = 0;
                 while (offset < recv_buf_len)
                 {
-                    size_t frame_len = 0;
-                    int data_len = decode_ws_frame(recv_buf + offset, recv_buf_len - offset, (unsigned char*)data, &frame_len);
+                    frame_len = 0;
+                    data_len = decode_ws_frame(recv_buf + offset, recv_buf_len - offset, (unsigned char*)data, &frame_len);
 
                     if (data_len > 0 && frame_len > 0)
                     {

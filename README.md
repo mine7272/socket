@@ -1,165 +1,174 @@
-# TCP & WebSocket ê¸°ë°˜ íŒŒì¼ ì „ì†¡ ì‹¤ìŠµ ë° ì„±ëŠ¥ ë¶„ì„ (v2)
+# TCP & WebSocket ±â¹Ý ÆÄÀÏ Àü¼Û ½Ç½À ¹× ¼º´É ºÐ¼® (v2)
 
-ë³¸ ë¬¸ì„œëŠ” ì§ì ‘ êµ¬í˜„í•œ WebSocket/TCP ì „ì†¡ ì‹¤ìŠµì˜ ê²°ê³¼ì™€ êµ¬ì¡°ë¥¼ ê¸°ë°˜ìœ¼ë¡œ,
-6ê°€ì§€ í†µì‹  ì¡°í•©ì˜ êµ¬ì¡° ë° ì„±ëŠ¥ ì°¨ì´ë¥¼ ë¶„ì„í•˜ê³  ì´ë¥¼ ì •ë¦¬í•œ ë¬¸ì„œì„œìž…ë‹ˆë‹¤.
+º» ¹®¼­´Â Á÷Á¢ ±¸ÇöÇÑ WebSocket/TCP Àü¼Û ½Ç½ÀÀÇ °á°ú¿Í ±¸Á¶¸¦ ±â¹ÝÀ¸·Î,
+6°¡Áö Åë½Å Á¶ÇÕÀÇ ±¸Á¶ ¹× ¼º´É Â÷ÀÌ¸¦ ºÐ¼®ÇÏ°í ÀÌ¸¦ Á¤¸®ÇÑ ¹®¼­¼­ÀÔ´Ï´Ù.
 
-## ëª©ì°¨
-- [1. í”„ë¡œì íŠ¸ ê°œìš”](#1-í”„ë¡œì íŠ¸-ê°œìš”)
-- [2. í†µì‹  ì¡°í•© ì„¤ëª…](#2-í†µì‹ -ì¡°í•©-ì„¤ëª…)
-- [3. ì‹¤í–‰ ë°©ë²•](#3-ì‹¤í–‰-ë°©ë²•)
-- [4. ì‹¤í–‰ ê²°ê³¼ ì˜ˆì‹œ](#4-ì‹¤í–‰-ê²°ê³¼-ì˜ˆì‹œ)
-- [5. ì„œë²„ í”„ë¡œê·¸ëž¨ êµ¬ì¡° ë° íŠ¹ì§•](#5-ì„œë²„-í”„ë¡œê·¸ëž¨-êµ¬ì¡°-ë°-íŠ¹ì§•)
-- [6. ì„±ëŠ¥ ë¹„êµ ê²°ê³¼](#6-ì„±ëŠ¥-ë¹„êµ-ê²°ê³¼)
-- [7. ì„±ëŠ¥ ì°¨ì´ ì›ì¸ ë¶„ì„](#7-ì„±ëŠ¥-ì°¨ì´-ì›ì¸-ë¶„ì„)
-- [8. ì—ëŸ¬ ì‚¬ë¡€ ë° í•´ê²°ë°©ì•ˆ](#8-ì—ëŸ¬-ì‚¬ë¡€-ë°-í•´ê²°ë°©ì•ˆ)
-- [9. ê²°ë¡  ë° ì˜ì˜](#9-ê²°ë¡ -ë°-ì˜ì˜)
+## ¸ñÂ÷
+- [TCP \& WebSocket ±â¹Ý ÆÄÀÏ Àü¼Û ½Ç½À ¹× ¼º´É ºÐ¼® (v2)](#tcp--websocket-±â¹Ý-ÆÄÀÏ-Àü¼Û-½Ç½À-¹×-¼º´É-ºÐ¼®-v2)
+  - [¸ñÂ÷](#¸ñÂ÷)
+  - [1. ÇÁ·ÎÁ§Æ® °³¿ä](#1-ÇÁ·ÎÁ§Æ®-°³¿ä)
+  - [2. Åë½Å Á¶ÇÕ ¼³¸í](#2-Åë½Å-Á¶ÇÕ-¼³¸í)
+  - [3. ½ÇÇà ¹æ¹ý](#3-½ÇÇà-¹æ¹ý)
+  - [4. ½ÇÇà °á°ú ¿¹½Ã](#4-½ÇÇà-°á°ú-¿¹½Ã)
+  - [5. ¼­¹ö ÇÁ·Î±×·¥ ±¸Á¶ ¹× Æ¯Â¡](#5-¼­¹ö-ÇÁ·Î±×·¥-±¸Á¶-¹×-Æ¯Â¡)
+  - [6. ¼º´É ºñ±³ °á°ú](#6-¼º´É-ºñ±³-°á°ú)
+    - [Åë½Å Á¶ÇÕº° ½ÇÇà ½Ã°£ Á¤¸®](#Åë½Å-Á¶ÇÕº°-½ÇÇà-½Ã°£-Á¤¸®)
+  - [7. ¼º´É Â÷ÀÌ ¿øÀÎ ºÐ¼®](#7-¼º´É-Â÷ÀÌ-¿øÀÎ-ºÐ¼®)
+  - [8. ¿¡·¯ »ç·Ê ¹× ÇØ°á¹æ¾È](#8-¿¡·¯-»ç·Ê-¹×-ÇØ°á¹æ¾È)
+    - [1. WebSocket ÇÁ·¹ÀÓ µðÄÚµù ½ÇÆÐ](#1-websocket-ÇÁ·¹ÀÓ-µðÄÚµù-½ÇÆÐ)
+    - [2. Segmentation fault (¼¼±×¸àÅ×ÀÌ¼Ç ¿À·ù)](#2-segmentation-fault-¼¼±×¸àÅ×ÀÌ¼Ç-¿À·ù)
+    - [3. WebSocket ÇÚµå¼ÎÀÌÅ© ½ÇÆÐ](#3-websocket-ÇÚµå¼ÎÀÌÅ©-½ÇÆÐ)
+    - [4. client\_rawtcp ¡æ server\_tcpws ½ÇÆÐ (v1 ½ÃÁ¡)](#4-client_rawtcp--server_tcpws-½ÇÆÐ-v1-½ÃÁ¡)
+  - [9. °á·Ð ¹× ÀÇÀÇ](#9-°á·Ð-¹×-ÀÇÀÇ)
 
 
 ---
 
-## 1. í”„ë¡œì íŠ¸ ê°œìš”
+## 1. ÇÁ·ÎÁ§Æ® °³¿ä
 
-ì´ í”„ë¡œì íŠ¸ëŠ” ì´ 6ê°€ì§€ í†µì‹  ì¡°í•©ì„ í†µí•´ íŒŒì¼ ì „ì†¡ ê¸°ëŠ¥ì„ ì‹¤ìŠµí•©ë‹ˆë‹¤.  
-WebSocketì€ ë‘ ê°€ì§€ ë°©ì‹ìœ¼ë¡œ í…ŒìŠ¤íŠ¸ë˜ì—ˆìŠµë‹ˆë‹¤:
+ÀÌ ÇÁ·ÎÁ§Æ®´Â ÃÑ 6°¡Áö Åë½Å Á¶ÇÕÀ» ÅëÇØ ÆÄÀÏ Àü¼Û ±â´ÉÀ» ½Ç½ÀÇÕ´Ï´Ù.  
+WebSocketÀº µÎ °¡Áö ¹æ½ÄÀ¸·Î Å×½ºÆ®µÇ¾ú½À´Ï´Ù:
 
-- **ì§ì ‘ êµ¬í˜„ëœ WebSocket (í•¸ë“œì…°ì´í¬, í”„ë ˆìž„ íŒŒì‹±, ë§ˆìŠ¤í‚¹ ìˆ˜ë™ ì²˜ë¦¬)**
-- **ë¼ì´ë¸ŒëŸ¬ë¦¬ ê¸°ë°˜ WebSocket (libwebsockets í™œìš©)**
+- **Á÷Á¢ ±¸ÇöµÈ WebSocket (ÇÚµå¼ÎÀÌÅ©, ÇÁ·¹ÀÓ ÆÄ½Ì, ¸¶½ºÅ· ¼öµ¿ Ã³¸®)**
+- **¶óÀÌºê·¯¸® ±â¹Ý WebSocket (libwebsockets È°¿ë)**
 
-ì‹¤í—˜ì—ì„œëŠ” ìˆ˜ì‹  ì‹œê°„ ë¹„êµë¥¼ í†µí•´ í”„ë¡œí† ì½œ ì„¤ê³„ì™€ êµ¬í˜„ ë°©ì‹ì— ë”°ë¥¸ ì„±ëŠ¥ ì°¨ì´ë¥¼ ë¶„ì„í•©ë‹ˆë‹¤.
+½ÇÇè¿¡¼­´Â ¼ö½Å ½Ã°£ ºñ±³¸¦ ÅëÇØ ÇÁ·ÎÅäÄÝ ¼³°è¿Í ±¸Çö ¹æ½Ä¿¡ µû¸¥ ¼º´É Â÷ÀÌ¸¦ ºÐ¼®ÇÕ´Ï´Ù.
 
 
-ì´ í”„ë¡œì íŠ¸ëŠ” ì´ 6ê°€ì§€ í†µì‹  ì¡°í•©ì„ í†µí•´ íŒŒì¼ ì „ì†¡ ê¸°ëŠ¥ì„ ì‹¤ìŠµí•©ë‹ˆë‹¤.  
-WebSocketì€ í•¸ë“œì…°ì´í¬ ë° í”„ë ˆìž„ ë§ˆìŠ¤í‚¹ì„ ì§ì ‘ êµ¬í˜„í–ˆìœ¼ë©°, ì„±ëŠ¥ ë¹„êµë¥¼ ìœ„í•´ ìˆ˜ì‹  ì‹œê°„ ì¸¡ì • ê¸°ëŠ¥ë„ í¬í•¨ë˜ì–´ ìžˆìŠµë‹ˆë‹¤.
+ÀÌ ÇÁ·ÎÁ§Æ®´Â ÃÑ 6°¡Áö Åë½Å Á¶ÇÕÀ» ÅëÇØ ÆÄÀÏ Àü¼Û ±â´ÉÀ» ½Ç½ÀÇÕ´Ï´Ù.  
+WebSocketÀº ÇÚµå¼ÎÀÌÅ© ¹× ÇÁ·¹ÀÓ ¸¶½ºÅ·À» Á÷Á¢ ±¸ÇöÇßÀ¸¸ç, ¼º´É ºñ±³¸¦ À§ÇØ ¼ö½Å ½Ã°£ ÃøÁ¤ ±â´Éµµ Æ÷ÇÔµÇ¾î ÀÖ½À´Ï´Ù.
 
 ---
 
-## 2. í†µì‹  ì¡°í•© ì„¤ëª…
+## 2. Åë½Å Á¶ÇÕ ¼³¸í
 
-| í´ë¼ì´ì–¸íŠ¸ í”„ë¡œê·¸ëž¨   | ì„œë²„ í”„ë¡œê·¸ëž¨     | ì„¤ëª…                                                                  |
+| Å¬¶óÀÌ¾ðÆ® ÇÁ·Î±×·¥   | ¼­¹ö ÇÁ·Î±×·¥     | ¼³¸í                                                                  |
 |------------------|------------------|---------------------------------------------------------------------|
-| client_rawtcp.c  | server_tcpws.c   | WebSocketì´ ì•„ë‹Œ ìˆœìˆ˜ TCP ì „ì†¡ â†’ ì´ì œ ìˆ˜ì‹  ê°€ëŠ¥                      |
-| client_tcp2ws.c  | server_tcpws.c   | TCP ì—°ê²° í›„ WebSocket í•¸ë“œì…°ì´í¬ + í”„ë ˆìž„ ë§ˆìŠ¤í‚¹ ì ìš©                          |
-| client_ws2tcp.c  | server_tcpws.c   | WebSocket í”„ë ˆìž„ë§Œ ì „ì†¡ (ê°€ì§œ WS í´ë¼ì´ì–¸íŠ¸) â†’ ì„œë²„ì—ì„œ í”„ë ˆìž„ ë””ì½”ë”© í•„ìš”       |
-| client_ws.c      | server_ws.c      | í‘œì¤€ WebSocket ë¼ì´ë¸ŒëŸ¬ë¦¬ ê¸°ë°˜ í´ë¼ì´ì–¸íŠ¸                                 |
-| client_ws.c      | server_tcpws.c   | ë¼ì´ë¸ŒëŸ¬ë¦¬ ê¸°ë°˜ í´ë¼ì´ì–¸íŠ¸ â†’ ì§ì ‘ êµ¬í˜„ëœ WebSocket ì„œë²„                        |
-| client_tcp2ws.c  | server_ws.c      | ìˆ˜ë™ êµ¬í˜„ í´ë¼ì´ì–¸íŠ¸ â†’ ë¼ì´ë¸ŒëŸ¬ë¦¬ ê¸°ë°˜ WebSocket ì„œë²„                         |
+| client_rawtcp.c  | server_tcpws.c   | WebSocketÀÌ ¾Æ´Ñ ¼ø¼ö TCP Àü¼Û ¡æ ÀÌÁ¦ ¼ö½Å °¡´É                      |
+| client_tcp2ws.c  | server_tcpws.c   | TCP ¿¬°á ÈÄ WebSocket ÇÚµå¼ÎÀÌÅ© + ÇÁ·¹ÀÓ ¸¶½ºÅ· Àû¿ë                          |
+| client_ws2tcp.c  | server_tcpws.c   | WebSocket ÇÁ·¹ÀÓ¸¸ Àü¼Û (°¡Â¥ WS Å¬¶óÀÌ¾ðÆ®) ¡æ ¼­¹ö¿¡¼­ ÇÁ·¹ÀÓ µðÄÚµù ÇÊ¿ä       |
+| client_ws.c      | server_ws.c      | Ç¥ÁØ WebSocket ¶óÀÌºê·¯¸® ±â¹Ý Å¬¶óÀÌ¾ðÆ®                                 |
+| client_ws.c      | server_tcpws.c   | ¶óÀÌºê·¯¸® ±â¹Ý Å¬¶óÀÌ¾ðÆ® ¡æ Á÷Á¢ ±¸ÇöµÈ WebSocket ¼­¹ö                        |
+| client_tcp2ws.c  | server_ws.c      | ¼öµ¿ ±¸Çö Å¬¶óÀÌ¾ðÆ® ¡æ ¶óÀÌºê·¯¸® ±â¹Ý WebSocket ¼­¹ö                         |
 
 ---
 
-## 3. ì‹¤í–‰ ë°©ë²•
+## 3. ½ÇÇà ¹æ¹ý
 
 ```bash
 make
 ./server_tcpws
 ./server_ws
 
-./client_rawtcp [íŒŒì¼ì´ë¦„]
-./client_tcp2ws [íŒŒì¼ì´ë¦„]
-./client_ws2tcp [íŒŒì¼ì´ë¦„]
-./client_ws [íŒŒì¼ì´ë¦„]
+./client_rawtcp [ÆÄÀÏÀÌ¸§]
+./client_tcp2ws [ÆÄÀÏÀÌ¸§]
+./client_ws2tcp [ÆÄÀÏÀÌ¸§]
+./client_ws [ÆÄÀÏÀÌ¸§]
 ```
 
 ---
 
-## 4. ì‹¤í–‰ ê²°ê³¼ ì˜ˆì‹œ
+## 4. ½ÇÇà °á°ú ¿¹½Ã
 
 ```
-ì„œë²„ ì‹¤í–‰ ì¤‘ (í¬íŠ¸ 8331)...
-í´ë¼ì´ì–¸íŠ¸ ì—°ê²°ë¨
-[WS] handshake ì™„ë£Œ. ìˆ˜ì‹  ì‹œìž‘
-[WS] ì´ ìˆ˜ì‹  ë°”ì´íŠ¸: 1017558069 / ì†Œìš” ì‹œê°„: 1.446383 ì´ˆ
-í´ë¼ì´ì–¸íŠ¸ ì—°ê²° ì¢…ë£Œ
+¼­¹ö ½ÇÇà Áß (Æ÷Æ® 8331)...
+Å¬¶óÀÌ¾ðÆ® ¿¬°áµÊ
+[WS] handshake ¿Ï·á. ¼ö½Å ½ÃÀÛ
+[WS] ÃÑ ¼ö½Å ¹ÙÀÌÆ®: 1017558069 / ¼Ò¿ä ½Ã°£: 1.446383 ÃÊ
+Å¬¶óÀÌ¾ðÆ® ¿¬°á Á¾·á
 
-í´ë¼ì´ì–¸íŠ¸ ì—°ê²°ë¨
-[TCP] ì´ ìˆ˜ì‹  ë°”ì´íŠ¸: 1017558069 / ì†Œìš” ì‹œê°„: 0.408939 ì´ˆ
-í´ë¼ì´ì–¸íŠ¸ ì—°ê²° ì¢…ë£Œ
+Å¬¶óÀÌ¾ðÆ® ¿¬°áµÊ
+[TCP] ÃÑ ¼ö½Å ¹ÙÀÌÆ®: 1017558069 / ¼Ò¿ä ½Ã°£: 0.408939 ÃÊ
+Å¬¶óÀÌ¾ðÆ® ¿¬°á Á¾·á
 ...
 ```
 
 ---
 
-## 5. ì„œë²„ í”„ë¡œê·¸ëž¨ êµ¬ì¡° ë° íŠ¹ì§•
+## 5. ¼­¹ö ÇÁ·Î±×·¥ ±¸Á¶ ¹× Æ¯Â¡
 
-- WebSocket í´ë¼ì´ì–¸íŠ¸ì™€ TCP í´ë¼ì´ì–¸íŠ¸ë¥¼ ëª¨ë‘ ìˆ˜ì‹  ê°€ëŠ¥
-- WebSocket í•¸ë“œì…°ì´í¬ ì§ì ‘ êµ¬í˜„ (`Sec-WebSocket-Key` â†’ SHA1 + Base64 â†’ Accept Key)
-- WebSocket í”„ë ˆìž„ ì§ì ‘ í•´ì„ ë° ë§ˆìŠ¤í‚¹ í•´ì œ ì²˜ë¦¬
-- recv()ì—ì„œ ìž˜ë¦° í”„ë ˆìž„ë„ ì²˜ë¦¬ ê°€ëŠ¥ (ëˆ„ì  ë²„í¼ + ì˜¤í”„ì…‹ ê¸°ë°˜ íŒŒì‹±)
-- malloc + realloc ê¸°ë°˜ìœ¼ë¡œ ëŒ€ìš©ëŸ‰ íŒŒì¼ ìˆ˜ì‹  ê°€ëŠ¥
-- í´ë¼ì´ì–¸íŠ¸ ì—°ê²° ì¢…ë£Œ í›„ì—ë„ ì„œë²„ëŠ” ê³„ì† ìˆ˜ì‹  ëŒ€ê¸° (while(1))
+- WebSocket Å¬¶óÀÌ¾ðÆ®¿Í TCP Å¬¶óÀÌ¾ðÆ®¸¦ ¸ðµÎ ¼ö½Å °¡´É
+- WebSocket ÇÚµå¼ÎÀÌÅ© Á÷Á¢ ±¸Çö (`Sec-WebSocket-Key` ¡æ SHA1 + Base64 ¡æ Accept Key)
+- WebSocket ÇÁ·¹ÀÓ Á÷Á¢ ÇØ¼® ¹× ¸¶½ºÅ· ÇØÁ¦ Ã³¸®
+- recv()¿¡¼­ Àß¸° ÇÁ·¹ÀÓµµ Ã³¸® °¡´É (´©Àû ¹öÆÛ + ¿ÀÇÁ¼Â ±â¹Ý ÆÄ½Ì)
+- malloc + realloc ±â¹ÝÀ¸·Î ´ë¿ë·® ÆÄÀÏ ¼ö½Å °¡´É
+- Å¬¶óÀÌ¾ðÆ® ¿¬°á Á¾·á ÈÄ¿¡µµ ¼­¹ö´Â °è¼Ó ¼ö½Å ´ë±â (while(1))
 
 ---
 
-## 6. ì„±ëŠ¥ ë¹„êµ ê²°ê³¼
+## 6. ¼º´É ºñ±³ °á°ú
 
-### í†µì‹  ì¡°í•©ë³„ ì‹¤í–‰ ì‹œê°„ ì •ë¦¬
+![TestResults](./test.png)
 
-| í´ë¼ì´ì–¸íŠ¸         | ì„œë²„             | í‰ê·  ì „ì†¡ ì‹œê°„ | êµ¬ì¡°ì  ë¶„ì„ |
+### Åë½Å Á¶ÇÕº° ½ÇÇà ½Ã°£ Á¤¸®
+
+| Å¬¶óÀÌ¾ðÆ®         | ¼­¹ö             | Æò±Õ Àü¼Û ½Ã°£ | ±¸Á¶Àû ºÐ¼® |
 |--------------------|------------------|----------------|-------------|
-| client_rawtcp       | server_tcpws      | 0.4ì´ˆ           | ìˆœìˆ˜ TCP, í”„ë ˆìž„ ì—†ìŒ, ë§ˆìŠ¤í‚¹ ì—†ìŒ |
-| client_tcp2ws       | server_tcpws      | 1.4~1.5ì´ˆ        | ì§ì ‘ êµ¬í˜„ëœ WebSocket ì–‘ë°©í–¥ |
-| client_ws2tcp       | server_tcpws      | 1.4~1.6ì´ˆ        | í”„ë ˆìž„ë§Œ ì „ì†¡. í•¸ë“œì…°ì´í¬ ì—†ìŒ |
-| client_tcp2ws       | server_ws         | 1.5~2.0ì´ˆ        | ì§ì ‘ êµ¬í˜„ í´ë¼ì´ì–¸íŠ¸ + ë¼ì´ë¸ŒëŸ¬ë¦¬ ì„œë²„ |
-| client_ws           | server_ws         | 1.1~1.3ì´ˆ        | í‘œì¤€ WebSocket í´ë¼ì´ì–¸íŠ¸/ì„œë²„ |
-| client_ws           | server_tcpws      | 2.5~4.6ì´ˆ        | ë¼ì´ë¸ŒëŸ¬ë¦¬ í´ë¼ì´ì–¸íŠ¸ + ìˆ˜ë™ ì„œë²„ |
+| client_rawtcp       | server_tcpws      | 0.4ÃÊ           | ¼ø¼ö TCP, ÇÁ·¹ÀÓ ¾øÀ½, ¸¶½ºÅ· ¾øÀ½ |
+| client_tcp2ws       | server_tcpws      | 1.4~1.5ÃÊ        | Á÷Á¢ ±¸ÇöµÈ WebSocket ¾ç¹æÇâ |
+| client_ws2tcp       | server_tcpws      | 1.4~1.6ÃÊ        | ÇÁ·¹ÀÓ¸¸ Àü¼Û. ÇÚµå¼ÎÀÌÅ© ¾øÀ½ |
+| client_tcp2ws       | server_ws         | 1.5~2.0ÃÊ        | Á÷Á¢ ±¸Çö Å¬¶óÀÌ¾ðÆ® + ¶óÀÌºê·¯¸® ¼­¹ö |
+| client_ws           | server_ws         | 1.1~1.3ÃÊ        | Ç¥ÁØ WebSocket Å¬¶óÀÌ¾ðÆ®/¼­¹ö |
+| client_ws           | server_tcpws      | 2.5~4.6ÃÊ        | ¶óÀÌºê·¯¸® Å¬¶óÀÌ¾ðÆ® + ¼öµ¿ ¼­¹ö |
 
 
-| í†µì‹  ë°©ì‹             | í‰ê·  ì „ì†¡ ì‹œê°„ | êµ¬ì¡°ì  íŠ¹ì§• |
+| Åë½Å ¹æ½Ä             | Æò±Õ Àü¼Û ½Ã°£ | ±¸Á¶Àû Æ¯Â¡ |
 |----------------------|----------------|--------------|
-| TCP (raw)             | ì•½ 0.4ì´ˆ         | ê°€ìž¥ ë‹¨ìˆœí•œ ìŠ¤íŠ¸ë¦¼ ê¸°ë°˜ ì „ì†¡. ë§ˆìŠ¤í‚¹/í”„ë ˆìž„ ì—†ìŒ. |
-| WebSocket (ì§ì ‘ êµ¬í˜„) | 1.4~1.6ì´ˆ        | ìˆ˜ë™ í”„ë ˆìž„ í•´ì„ ë° ë§ˆìŠ¤í‚¹ í•´ì œ í•„ìš”. ì˜¤ë²„í—¤ë“œ ì¡´ìž¬. |
-| WebSocket (ë¼ì´ë¸ŒëŸ¬ë¦¬) | 1.1~1.5ì´ˆ        | ìµœì í™”ëœ ë‚´ë¶€ ì²˜ë¦¬. ê°€ìž¥ ì•ˆì •ì  ì„±ëŠ¥. |
-| WS í´ë¼ â†’ ìˆ˜ë™ ì„œë²„    | 2.5~4.6ì´ˆ        | ë¼ì´ë¸ŒëŸ¬ë¦¬ í´ë¼ì´ì–¸íŠ¸ + ìˆ˜ë™ êµ¬í˜„ ì„œë²„ â†’ í”„ë ˆìž„ í•´ì„ ë³‘ëª© |
+| TCP (raw)             | ¾à 0.4ÃÊ         | °¡Àå ´Ü¼øÇÑ ½ºÆ®¸² ±â¹Ý Àü¼Û. ¸¶½ºÅ·/ÇÁ·¹ÀÓ ¾øÀ½. |
+| WebSocket (Á÷Á¢ ±¸Çö) | 1.4~1.6ÃÊ        | ¼öµ¿ ÇÁ·¹ÀÓ ÇØ¼® ¹× ¸¶½ºÅ· ÇØÁ¦ ÇÊ¿ä. ¿À¹öÇìµå Á¸Àç. |
+| WebSocket (¶óÀÌºê·¯¸®) | 1.1~1.5ÃÊ        | ÃÖÀûÈ­µÈ ³»ºÎ Ã³¸®. °¡Àå ¾ÈÁ¤Àû ¼º´É. |
+| WS Å¬¶ó ¡æ ¼öµ¿ ¼­¹ö    | 2.5~4.6ÃÊ        | ¶óÀÌºê·¯¸® Å¬¶óÀÌ¾ðÆ® + ¼öµ¿ ±¸Çö ¼­¹ö ¡æ ÇÁ·¹ÀÓ ÇØ¼® º´¸ñ |
 
 ---
 
-## 7. ì„±ëŠ¥ ì°¨ì´ ì›ì¸ ë¶„ì„
+## 7. ¼º´É Â÷ÀÌ ¿øÀÎ ºÐ¼®
 
-- í”„ë ˆìž„ í•´ì„ ìœ ë¬´: WebSocketì€ ì „ì†¡ ë°ì´í„°ë¥¼ í”„ë ˆìž„ìœ¼ë¡œ ë‚˜ëˆ„ì–´ í•´ì„í•´ì•¼ í•˜ë¯€ë¡œ ì²˜ë¦¬ ë¶€ë‹´ì´ í¼
-- ë§ˆìŠ¤í‚¹ í•´ì œ ì—°ì‚°: ëª¨ë“  ë°”ì´íŠ¸ì— ëŒ€í•´ XOR ë§ˆìŠ¤í‚¹ í•´ì œ ìˆ˜í–‰
-- í•¸ë“œì…°ì´í¬ ìœ ë¬´: TCPëŠ” ì „ì†¡ ì¦‰ì‹œ ì‹œìž‘ ê°€ëŠ¥, WebSocketì€ HTTP ì—…ê·¸ë ˆì´ë“œ í•„ìš”
-- ë¼ì´ë¸ŒëŸ¬ë¦¬ ìµœì í™”: ì„œë²„/í´ë¼ì´ì–¸íŠ¸ê°€ ë¼ì´ë¸ŒëŸ¬ë¦¬ ê¸°ë°˜ì¼ìˆ˜ë¡ ì„±ëŠ¥ì´ ê°œì„ ë¨
-- ë©”ëª¨ë¦¬ ì²˜ë¦¬ ë°©ì‹: ìˆ˜ë™ êµ¬í˜„ì€ ëˆ„ì  ë²„í¼ ë° realloc ìµœì í™” í•„ìš”
+- ÇÁ·¹ÀÓ ÇØ¼® À¯¹«: WebSocketÀº Àü¼Û µ¥ÀÌÅÍ¸¦ ÇÁ·¹ÀÓÀ¸·Î ³ª´©¾î ÇØ¼®ÇØ¾ß ÇÏ¹Ç·Î Ã³¸® ºÎ´ãÀÌ Å­
+- ¸¶½ºÅ· ÇØÁ¦ ¿¬»ê: ¸ðµç ¹ÙÀÌÆ®¿¡ ´ëÇØ XOR ¸¶½ºÅ· ÇØÁ¦ ¼öÇà
+- ÇÚµå¼ÎÀÌÅ© À¯¹«: TCP´Â Àü¼Û Áï½Ã ½ÃÀÛ °¡´É, WebSocketÀº HTTP ¾÷±×·¹ÀÌµå ÇÊ¿ä
+- ¶óÀÌºê·¯¸® ÃÖÀûÈ­: ¼­¹ö/Å¬¶óÀÌ¾ðÆ®°¡ ¶óÀÌºê·¯¸® ±â¹ÝÀÏ¼ö·Ï ¼º´ÉÀÌ °³¼±µÊ
+- ¸Þ¸ð¸® Ã³¸® ¹æ½Ä: ¼öµ¿ ±¸ÇöÀº ´©Àû ¹öÆÛ ¹× realloc ÃÖÀûÈ­ ÇÊ¿ä
 
 ---
 
-## 8. ì—ëŸ¬ ì‚¬ë¡€ ë° í•´ê²°ë°©ì•ˆ
+## 8. ¿¡·¯ »ç·Ê ¹× ÇØ°á¹æ¾È
 
-### 1. WebSocket í”„ë ˆìž„ ë””ì½”ë”© ì‹¤íŒ¨
+### 1. WebSocket ÇÁ·¹ÀÓ µðÄÚµù ½ÇÆÐ
 
-**í˜„ìƒ**
-- ì‹¤í–‰ ì¤‘ `[WS] í”„ë ˆìž„ ë””ì½”ë”© ì‹¤íŒ¨ ë˜ëŠ” ìž˜ë¦¼` ë©”ì‹œì§€ê°€ ë‹¤ìˆ˜ ì¶œë ¥ë¨
+**Çö»ó**
+- ½ÇÇà Áß `[WS] ÇÁ·¹ÀÓ µðÄÚµù ½ÇÆÐ ¶Ç´Â Àß¸²` ¸Þ½ÃÁö°¡ ´Ù¼ö Ãâ·ÂµÊ
 
-**ì›ì¸**
-- `recv()` í˜¸ì¶œë¡œ ë°›ì€ ë°ì´í„°ê°€ WebSocket í”„ë ˆìž„ ë‹¨ìœ„ë¡œ ì™„ì „ížˆ ë„ì°©í•˜ì§€ ì•ŠìŒ
-- í”„ë ˆìž„ì´ ì¤‘ê°„ì— ìž˜ë ¤ ë“¤ì–´ì˜¤ë©´ `decode_ws_frame()` í•¨ìˆ˜ì—ì„œ ê¸¸ì´ ì²´í¬ì— ì‹¤íŒ¨í•˜ì—¬ -1 ë°˜í™˜
+**¿øÀÎ**
+- `recv()` È£Ãâ·Î ¹ÞÀº µ¥ÀÌÅÍ°¡ WebSocket ÇÁ·¹ÀÓ ´ÜÀ§·Î ¿ÏÀüÈ÷ µµÂøÇÏÁö ¾ÊÀ½
+- ÇÁ·¹ÀÓÀÌ Áß°£¿¡ Àß·Á µé¾î¿À¸é `decode_ws_frame()` ÇÔ¼ö¿¡¼­ ±æÀÌ Ã¼Å©¿¡ ½ÇÆÐÇÏ¿© -1 ¹ÝÈ¯
 
 ```c
 if (length < offset + 4 + payload_len) return -1;
 ```
 
-**í•´ê²°**
-- ëˆ„ì  ë²„í¼(`recv_buf`)ì— ê³„ì† ë¶™ì—¬ë„£ê³ ,
-- í”„ë ˆìž„ì´ ì™„ì„±ë  ë•Œê¹Œì§€ ê¸°ë‹¤ë¦° í›„ íŒŒì‹±
-- ì²˜ë¦¬ê°€ ëë‚œ ë°”ì´íŠ¸ë§Œ `memmove()`ë¡œ ì œê±°
+**ÇØ°á**
+- ´©Àû ¹öÆÛ(`recv_buf`)¿¡ °è¼Ó ºÙ¿©³Ö°í,
+- ÇÁ·¹ÀÓÀÌ ¿Ï¼ºµÉ ¶§±îÁö ±â´Ù¸° ÈÄ ÆÄ½Ì
+- Ã³¸®°¡ ³¡³­ ¹ÙÀÌÆ®¸¸ `memmove()`·Î Á¦°Å
 
 ---
 
-### 2. Segmentation fault (ì„¸ê·¸ë©˜í…Œì´ì…˜ ì˜¤ë¥˜)
+### 2. Segmentation fault (¼¼±×¸àÅ×ÀÌ¼Ç ¿À·ù)
 
-**í˜„ìƒ**
-- ìˆ˜ì‹  ì¤‘ í”„ë¡œê·¸ëž¨ì´ ê°‘ìž‘ìŠ¤ëŸ½ê²Œ ì¢…ë£Œë˜ë©° core dump ë°œìƒ
+**Çö»ó**
+- ¼ö½Å Áß ÇÁ·Î±×·¥ÀÌ °©ÀÛ½º·´°Ô Á¾·áµÇ¸ç core dump ¹ß»ý
 
-**ì›ì¸**
-- ìˆ˜ì‹  ë°ì´í„°ë¥¼ ë‹´ì„ `all_data`ë¥¼ ê³ ì •ëœ í¬ê¸°ë¡œ ì„ ì–¸í–ˆì„ ë•Œ,
-  1GB ì´ìƒ íŒŒì¼ì„ ìˆ˜ì‹ í•˜ë©´ì„œ **ë²„í¼ ì˜¤ë²„í”Œë¡œìš°** ë°œìƒ
+**¿øÀÎ**
+- ¼ö½Å µ¥ÀÌÅÍ¸¦ ´ãÀ» `all_data`¸¦ °íÁ¤µÈ Å©±â·Î ¼±¾ðÇßÀ» ¶§,
+  1GB ÀÌ»ó ÆÄÀÏÀ» ¼ö½ÅÇÏ¸é¼­ **¹öÆÛ ¿À¹öÇÃ·Î¿ì** ¹ß»ý
 
 ```c
-unsigned char all_data[102400]; // ê³ ì • í¬ê¸° â†’ ìœ„í—˜
+unsigned char all_data[102400]; // °íÁ¤ Å©±â ¡æ À§Çè
 ```
 
-**í•´ê²°**
-- ì´ˆê¸°ì—ëŠ” `malloc()`ìœ¼ë¡œ í¬ê¸°ë¥¼ ì •í•˜ê³ ,
-- ìˆ˜ì‹ ëŸ‰ì´ ì¦ê°€í•  ë•Œ `realloc()`ì„ í†µí•´ ë²„í¼ í™•ìž¥
+**ÇØ°á**
+- ÃÊ±â¿¡´Â `malloc()`À¸·Î Å©±â¸¦ Á¤ÇÏ°í,
+- ¼ö½Å·®ÀÌ Áõ°¡ÇÒ ¶§ `realloc()`À» ÅëÇØ ¹öÆÛ È®Àå
 
 ```c
 if (total_len + recv_len > capacity) {
@@ -170,22 +179,22 @@ if (total_len + recv_len > capacity) {
 
 ---
 
-### 3. WebSocket í•¸ë“œì…°ì´í¬ ì‹¤íŒ¨
+### 3. WebSocket ÇÚµå¼ÎÀÌÅ© ½ÇÆÐ
 
-**í˜„ìƒ**
-- í´ë¼ì´ì–¸íŠ¸ê°€ `HTTP/1.1 101 Switching Protocols` ì‘ë‹µì„ ë°›ì§€ ëª»í•˜ê³  ì¢…ë£Œë¨
+**Çö»ó**
+- Å¬¶óÀÌ¾ðÆ®°¡ `HTTP/1.1 101 Switching Protocols` ÀÀ´äÀ» ¹ÞÁö ¸øÇÏ°í Á¾·áµÊ
 
-**ì›ì¸**
-- ì„œë²„ì—ì„œ í´ë¼ì´ì–¸íŠ¸ì˜ `Sec-WebSocket-Key`ë¥¼ ì •í™•ížˆ íŒŒì‹±í•˜ì§€ ëª»í–ˆê±°ë‚˜,
-- `Accept-Key` ê³„ì‚° ë¡œì§ ì˜¤ë¥˜ ë°œìƒ
+**¿øÀÎ**
+- ¼­¹ö¿¡¼­ Å¬¶óÀÌ¾ðÆ®ÀÇ `Sec-WebSocket-Key`¸¦ Á¤È®È÷ ÆÄ½ÌÇÏÁö ¸øÇß°Å³ª,
+- `Accept-Key` °è»ê ·ÎÁ÷ ¿À·ù ¹ß»ý
 
 ```c
 char *key_start = strstr(request, "Sec-WebSocket-Key: ");
 ```
 
-**í•´ê²°**
-- í´ë¼ì´ì–¸íŠ¸ê°€ ë³´ë‚¸ í—¤ë”ì—ì„œ Keyë¥¼ ì •í™•ížˆ ì¶”ì¶œí•˜ê³ ,
-- SHA1 + Base64 ë¡œì§ì„ ì •í™•ížˆ ì ìš©
+**ÇØ°á**
+- Å¬¶óÀÌ¾ðÆ®°¡ º¸³½ Çì´õ¿¡¼­ Key¸¦ Á¤È®È÷ ÃßÃâÇÏ°í,
+- SHA1 + Base64 ·ÎÁ÷À» Á¤È®È÷ Àû¿ë
 
 ```c
 SHA1((unsigned char*)concatenated, strlen(concatenated), hash);
@@ -194,37 +203,37 @@ return base64_encode(hash, SHA_DIGEST_LENGTH);
 
 ---
 
-### 4. client_rawtcp â†’ server_tcpws ì‹¤íŒ¨ (v1 ì‹œì )
+### 4. client_rawtcp ¡æ server_tcpws ½ÇÆÐ (v1 ½ÃÁ¡)
 
-**í˜„ìƒ**
-- ì„œë²„ê°€ í´ë¼ì´ì–¸íŠ¸ë¥¼ WebSocketìœ¼ë¡œ ì˜¤ì¸í•˜ì—¬,
-  `WebSocket í‚¤ ì¶”ì¶œ ì‹¤íŒ¨` ë˜ëŠ” `[WS] í•¸ë“œì…°ì´í¬ ì‹¤íŒ¨` ë©”ì‹œì§€ ì¶œë ¥
+**Çö»ó**
+- ¼­¹ö°¡ Å¬¶óÀÌ¾ðÆ®¸¦ WebSocketÀ¸·Î ¿ÀÀÎÇÏ¿©,
+  `WebSocket Å° ÃßÃâ ½ÇÆÐ` ¶Ç´Â `[WS] ÇÚµå¼ÎÀÌÅ© ½ÇÆÐ` ¸Þ½ÃÁö Ãâ·Â
 
-**ì›ì¸**
-- server_tcpwsê°€ `strncmp(buffer, "GET", 3)` ì¡°ê±´ìœ¼ë¡œ WebSocketë§Œ ì²˜ë¦¬í•˜ë„ë¡ êµ¬ì„±ë¨
+**¿øÀÎ**
+- server_tcpws°¡ `strncmp(buffer, "GET", 3)` Á¶°ÇÀ¸·Î WebSocket¸¸ Ã³¸®ÇÏµµ·Ï ±¸¼ºµÊ
 
 ```c
 if (strncmp(buffer, "GET", 3) == 0) {
-    // WebSocket ì²˜ë¦¬
+    // WebSocket Ã³¸®
 } else {
-    // TCP ì²˜ë¦¬
+    // TCP Ã³¸®
 }
 ```
 
-**í•´ê²°**
-- ì´ ì¡°ê±´ì— ë”°ë¼ ë³„ë„ì˜ TCP ìˆ˜ì‹  ë¡œì§ì„ ë¶„ê¸° ì²˜ë¦¬
-- raw TCPì¼ ê²½ìš°ì—ëŠ” ê³§ë°”ë¡œ `recv()`ë¡œ ìˆ˜ì‹  ì‹œìž‘
+**ÇØ°á**
+- ÀÌ Á¶°Ç¿¡ µû¶ó º°µµÀÇ TCP ¼ö½Å ·ÎÁ÷À» ºÐ±â Ã³¸®
+- raw TCPÀÏ °æ¿ì¿¡´Â °ð¹Ù·Î `recv()`·Î ¼ö½Å ½ÃÀÛ
 
 ---
 
-## 9. ê²°ë¡  ë° ì˜ì˜
+## 9. °á·Ð ¹× ÀÇÀÇ
 
-- ìˆœìˆ˜ TCP ë°©ì‹ì´ ê°€ìž¥ ë¹ ë¥´ë©°, WebSocketì€ êµ¬ì¡°ìƒ ë¶€ê°€ ì—°ì‚°ì´ ë§Žì•„ ëŒ€ìš©ëŸ‰ ì „ì†¡ì— ë¶ˆë¦¬í•©ë‹ˆë‹¤.
-- ì§ì ‘ êµ¬í˜„í•œ WebSocket êµ¬ì¡°ëŠ” ê¸°ëŠ¥ ê²€ì¦ì—ëŠ” ì í•©í•˜ì§€ë§Œ, ì„±ëŠ¥ìƒ ë¼ì´ë¸ŒëŸ¬ë¦¬ ëŒ€ë¹„ ë¶ˆë¦¬í•©ë‹ˆë‹¤.
-- ì‹¤ìŠµì„ í†µí•´ í†µì‹  í”„ë¡œí† ì½œ ì„ íƒì´ ì„±ëŠ¥ì— ë¯¸ì¹˜ëŠ” ì˜í–¥ì„ ì§ì ‘ ë¹„êµí•˜ë©° í•™ìŠµí•  ìˆ˜ ìžˆì—ˆìŠµë‹ˆë‹¤.
-- ë˜í•œ ì§ì ‘ êµ¬í˜„ê³¼ í‘œì¤€ ë¼ì´ë¸ŒëŸ¬ë¦¬ ê°„ í˜¸í™˜ì„± ë¬¸ì œë„ í™•ì¸í•  ìˆ˜ ìžˆì—ˆìŠµë‹ˆë‹¤.
+- ¼ø¼ö TCP ¹æ½ÄÀÌ °¡Àå ºü¸£¸ç, WebSocketÀº ±¸Á¶»ó ºÎ°¡ ¿¬»êÀÌ ¸¹¾Æ ´ë¿ë·® Àü¼Û¿¡ ºÒ¸®ÇÕ´Ï´Ù.
+- Á÷Á¢ ±¸ÇöÇÑ WebSocket ±¸Á¶´Â ±â´É °ËÁõ¿¡´Â ÀûÇÕÇÏÁö¸¸, ¼º´É»ó ¶óÀÌºê·¯¸® ´ëºñ ºÒ¸®ÇÕ´Ï´Ù.
+- ½Ç½ÀÀ» ÅëÇØ Åë½Å ÇÁ·ÎÅäÄÝ ¼±ÅÃÀÌ ¼º´É¿¡ ¹ÌÄ¡´Â ¿µÇâÀ» Á÷Á¢ ºñ±³ÇÏ¸ç ÇÐ½ÀÇÒ ¼ö ÀÖ¾ú½À´Ï´Ù.
+- ¶ÇÇÑ Á÷Á¢ ±¸Çö°ú Ç¥ÁØ ¶óÀÌºê·¯¸® °£ È£È¯¼º ¹®Á¦µµ È®ÀÎÇÒ ¼ö ÀÖ¾ú½À´Ï´Ù.
 
 ---
 
-ìž‘ì„±ìž: ê¹€ë¯¼íšŒ (mine7272)  
-ì—…ë°ì´íŠ¸: 2025-04-01  
+ÀÛ¼ºÀÚ: ±è¹ÎÈ¸ (mine7272)  
+¾÷µ¥ÀÌÆ®: 2025-04-01  
